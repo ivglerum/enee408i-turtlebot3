@@ -39,7 +39,7 @@ def scan_callback(msg):
         angle += 1
         if 0.0 < r <SAFETY_DIST:
             obstacles.append(r)
-            angles.appened(angle)
+            angles.append(angle)
     print(angles) 
 
     # Filter out 0.0 values (often noise/out of range) and check distances
@@ -96,4 +96,5 @@ if __name__ == '__main__':
         move()
     except rospy.ROSInterruptException:
         pass
+
 
