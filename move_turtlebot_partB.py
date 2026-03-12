@@ -29,9 +29,10 @@ def scan_callback(msg):
     
     # Check a 40-degree cone in front (20 deg left and 20 deg right)
     # TurtleBot3 index 0 is center-front. Indices 1-20 are left, 340-359 are right.
-    front_ranges = msg.ranges[0:20] + msg.ranges[340:360]
     
-    # Filter out 0.0 values (often noise/out of range) and check distances
+    #from testing it seems the Lidar looks from 1-243 ish instead of 0-360 based on its spinning speed/sampling freq
+    #Filter out 0.0 values (often noise/out of range) and check distances
+    front_ranges = msg.ranges[0:20] + msg.ranges[220:245]
     obstacles = [r for r in front_ranges if 0.0 < r < SAFETY_DIST]
     
     if obstacles:
