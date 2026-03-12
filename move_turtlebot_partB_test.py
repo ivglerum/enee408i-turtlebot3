@@ -1,0 +1,95 @@
+import rospy
+from geometry_msgs.msg import Twist
+import sys, select, termios, tty
+#part b
+from sensor_msgs.msg import LaserScan
+
+settings = termios.tcgetattr(sys.stdin)
+
+
+obstacle_detected = False
+
+# Settings for non-blocking terminal read
+def get_key():
+    tty.setraw(sys.stdin.fileno())
+    # Wait 0.1 seconds for a keypress, otherwise return None
+    rlist, _, _ = select.select([sys.stdin], [], [], 0.1)
+    if rlist:
+        key = sys.stdin.read(1)
+    else:
+        key = ''
+    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
+    return key
+
+#part b
+def scan_callback(msg):
+    global obstacle_detected
+    # Define the safety distance in meters
+    SAFETY_DIST = 0.25 
+    
+    # Check a 40-degree cone in front (20 deg left and 20 deg right)
+    # TurtleBot3 index 0 is center-front. Indices 1-20 are left, 340-359 are right.
+    
+
+    #  #TEST
+    front_ranges = msg.ranges[0:360]
+    obstacles = []
+    for r in front_ranges:
+        if 0.0 < r <SAFETY_DIST:
+            obstacles.append(r)
+            print("angle:",r)
+
+    # Filter out 0.0 values (often noise/out of range) and check distances
+    #front_ranges = msg.ranges[0:20] + msg.ranges[340:360]
+    #obstacles = [r for r in front_ranges if 0.0 < r < SAFETY_DIST]
+    
+    if obstacles:
+        obstacle_detected = True
+    else:
+        obstacle_detected = False
+
+
+def move():
+    rospy.init_node('turtlebot3_autonomous_move', anonymous=True)
+    pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+    rate = rospy.Rate(10)  # 10 Hz
+    vel_msg = Twist()
+
+    # speed step increments
+    LIN_STEP = 0.01
+    ANG_STEP = 0.1
+
+    #lidar subscriber
+    rospy.Subscriber('/scan', LaserScan, scan_callback)
+
+
+    while not rospy.is_shutdown():
+        key = get_key()
+            
+        if key == 'w':
+            vel_msg.linear.x += LIN_STEP
+        elif key == 's':
+            vel_msg.linear.x -= LIN_STEP
+        elif key == 'a':
+            vel_msg.angular.z += ANG_STEP
+        elif key == 'd':
+            vel_msg.angular.z -= ANG_STEP
+        elif key == ' ': # Spacebar to emergency stop
+            vel_msg.linear.x = 0.0
+            vel_msg.angular.z = 0.0
+        elif key == '\x03': # Ctrl+C
+            break
+
+        if obstacle_detected and vel_msg.linear.x > 0:
+            rospy.logwarn("SAFETY STOP: Obstacle in front!")
+            vel_msg.linear.x = 0.0
+
+
+        pub.publish(vel_msg)
+        rate.sleep()
+
+if __name__ == '__main__':
+    try:
+        move()
+    except rospy.ROSInterruptException:
+        pass
