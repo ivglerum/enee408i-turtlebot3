@@ -30,6 +30,7 @@ def scan_callback(msg):
     # Check a 40-degree cone in front (20 deg left and 20 deg right)
     # TurtleBot3 index 0 is center-front. Indices 1-20 are left, 340-359 are right.
     
+
     #  #TEST
     front_ranges = msg.ranges[0:360]
     obstacles = []
@@ -39,8 +40,10 @@ def scan_callback(msg):
         angle += 1
         if 0.0 < r <SAFETY_DIST:
             obstacles.append(r)
-            angles.append(angle)
-    print(angles) 
+            angles.appened(angle)
+    print(len(msg.ranges),angles)    
+    
+    #from testing it seems the Lidar looks from 1-243 ish instead of 0-360 based on its spinning speed/sampling freq
 
     # Filter out 0.0 values (often noise/out of range) and check distances
     #front_ranges = msg.ranges[0:20] + msg.ranges[340:360]
@@ -96,5 +99,3 @@ if __name__ == '__main__':
         move()
     except rospy.ROSInterruptException:
         pass
-
-
