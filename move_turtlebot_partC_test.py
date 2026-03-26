@@ -53,7 +53,7 @@ def move():
             rospy.loginfo("Capturing image...")
             try:
                 # Wait for one frame from the camera topic (timeout 2s)
-                msg = rospy.wait_for_message("/usb_cam/image_raw", Image, timeout=2.0)
+                msg = rospy.wait_for_message("/camera/image", Image, timeout=2.0)
                 save_image(msg)
             except rospy.ROSException:
                 rospy.logerr("Camera timeout: Is the usb_cam node running?")
